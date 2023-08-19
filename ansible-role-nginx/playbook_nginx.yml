@@ -1,0 +1,38 @@
+---
+- name: install nginx
+  hosts: all
+  become: true
+  
+  vars:
+    os_family: "{{ 'RedHat' if ansible_facts['ansible_os_family'] == 'RedHat' else '' }}"
+    nginx_state: 'install'
+    nginx_amplify_enable: false
+    nginx_type: 'opensource'
+    nginx_modules: []
+    nginx_install_from: 'nginx_repository'
+    nginx_manage_repo: true
+    nginx_service_modify: false
+    nginx_logrotate_conf_enable: true
+
+  tasks:
+    - name: install package
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - epel-release
+      when: nginx_install_from == 'nginx_repository' and ansible_facts['os_family'] == 'RedHat'
+      tags:
+        - nginx_install
+
+    - include_role:
+        name: nginxinc.nginx
+      vars:
+        nginx_manage_repo: "{{ nginx_manage_repo }}"
+        nginx_service_modify: "{{ nginx_service_modify }}"
+        nginx_amplify_enable: "{{ nginx_amplify_enable }}"
+        nginx_type: "{{ nginx_type }}"
+        nginx_modules: "{{ nginx_modules }}"
+      tags:
+        - nginx_install
+
